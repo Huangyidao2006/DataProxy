@@ -1,1 +1,0 @@
-/usr/bin/cc -O3 -DNDEBUG   CMakeFiles/data_proxy.dir/main.c.o CMakeFiles/data_proxy.dir/src/common/Common.c.o CMakeFiles/data_proxy.dir/src/log/Log.c.o CMakeFiles/data_proxy.dir/src/net/TcpClient.c.o CMakeFiles/data_proxy.dir/src/net/UdpHelper.c.o CMakeFiles/data_proxy.dir/src/time/Time.c.o  -o data_proxy  -lpthread -lusb-1.0 
