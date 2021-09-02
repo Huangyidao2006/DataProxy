@@ -5,7 +5,7 @@ include_directories(include)
 
 FILE(GLOB_RECURSE SRC_FILES "src/*/*.c")
 
-add_executable(data_proxy main.c ${SRC_FILES})
+add_executable(data_proxy main.c ${SRC_FILES} include/net/UdpHelper.h src/net/UdpHelper.c)
 target_link_libraries(data_proxy
         pthread
         usb-1.0)

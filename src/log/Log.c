@@ -20,6 +20,28 @@ void setLogLevel(LogLevel level) {
 	g_logLevel = level;
 }
 
+static const char* levelToStr(LogLevel level) {
+	switch (level) {
+		case SDK_DEBUG: {
+			return "D";
+		} break;
+
+        case SDK_INFO: {
+            return "I";
+        } break;
+
+        case SDK_WARN: {
+            return "W";
+        } break;
+
+        case SDK_ERROR: {
+            return "E";
+        } break;
+	}
+
+	return "";
+}
+
 void printLog(LogLevel level, const char* filename, int line, const char* fmt, ...) {
 	va_list args;
 	va_start(args, fmt);
@@ -33,8 +55,8 @@ void printLog(LogLevel level, const char* filename, int line, const char* fmt, .
 	getCurrentTime("%Y-%m-%d %H:%M:%S", curTime, sizeof(curTime));
 	long curTimeMs = currentTimeMillis() % 1000;
 
-	printf("[%s %d T0x%08x] %s(line %d): %s\n", curTime, curTimeMs, syscall(__NR_gettid),
-		   filename, line, buffer);
+	printf("[%s %ld T0x%08x] %s(line %d)/%s: %s\n", curTime, curTimeMs, (int) syscall(__NR_gettid),
+		   filename, line, levelToStr(level), buffer);
 
 	free(buffer);
 }

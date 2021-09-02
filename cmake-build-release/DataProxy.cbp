@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="DataProxy"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="/home/hj/gitrepo/DataProxy/cmake-build-release"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="rebuild_cache">
+				<Option working_dir="/home/hj/gitrepo/DataProxy/cmake-build-release"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 rebuild_cache"/>
+					<CompileFile command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="edit_cache">
+				<Option working_dir="/home/hj/gitrepo/DataProxy/cmake-build-release"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 edit_cache"/>
+					<CompileFile command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="data_proxy">
+				<Option output="/home/hj/gitrepo/DataProxy/cmake-build-release/data_proxy" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/hj/gitrepo/DataProxy/cmake-build-release"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/hj/gitrepo/DataProxy/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/10/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 data_proxy"/>
+					<CompileFile command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="data_proxy/fast">
+				<Option output="/home/hj/gitrepo/DataProxy/cmake-build-release/data_proxy" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="/home/hj/gitrepo/DataProxy/cmake-build-release"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="/home/hj/gitrepo/DataProxy/include"/>
+					<Add directory="/usr/lib/gcc/x86_64-linux-gnu/10/include"/>
+					<Add directory="/usr/local/include"/>
+					<Add directory="/usr/include/x86_64-linux-gnu"/>
+					<Add directory="/usr/include"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 data_proxy/fast"/>
+					<CompileFile command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="/usr/bin/gmake -j12 -f &quot;/home/hj/gitrepo/DataProxy/cmake-build-release/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="/home/hj/gitrepo/DataProxy/include/net/UdpHelper.h">
+			<Option target="data_proxy"/>
+		</Unit>
+		<Unit filename="/home/hj/gitrepo/DataProxy/main.c">
+			<Option target="data_proxy"/>
+		</Unit>
+		<Unit filename="/home/hj/gitrepo/DataProxy/src/common/Common.c">
+			<Option target="data_proxy"/>
+		</Unit>
+		<Unit filename="/home/hj/gitrepo/DataProxy/src/log/Log.c">
+			<Option target="data_proxy"/>
+		</Unit>
+		<Unit filename="/home/hj/gitrepo/DataProxy/src/net/TcpClient.c">
+			<Option target="data_proxy"/>
+		</Unit>
+		<Unit filename="/home/hj/gitrepo/DataProxy/src/net/UdpHelper.c">
+			<Option target="data_proxy"/>
+		</Unit>
+		<Unit filename="/home/hj/gitrepo/DataProxy/src/time/Time.c">
+			<Option target="data_proxy"/>
+		</Unit>
+		<Unit filename="/home/hj/gitrepo/DataProxy/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
