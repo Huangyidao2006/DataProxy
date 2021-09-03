@@ -14,7 +14,6 @@ typedef void (*UdpHelperErrorCbFunc)(int error, const char* des, void* pCtx);
 typedef struct {
     int socket_fd;
     unsigned short local_port;
-    bool is_noblock;
     bool is_stop_recv;
     char* recv_buffer;
     int recv_buffer_len;

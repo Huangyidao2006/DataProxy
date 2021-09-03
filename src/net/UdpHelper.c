@@ -110,13 +110,13 @@ int UdpHelperInit(UdpHelperCtx* pCtx) {
 		LOG_E("errno=%d, %s", errno, strerror(errno));
 	}
 
-    if (pCtx->is_noblock) {
-        int flags = fcntl(pCtx->socket_fd, F_GETFL, 0);
-        ret = fcntl(pCtx->socket_fd, F_SETFL, flags | O_NONBLOCK);
-        if (ret < 0) {
-            LOG_E("errno=%d, %s", errno, strerror(errno));
-        }
-    }
+	int flags = fcntl(pCtx->socket_fd, F_GETFL, 0);
+	ret = fcntl(pCtx->socket_fd, F_SETFL, flags | O_NONBLOCK);
+	if (ret < 0) {
+		LOG_E("errno=%d, %s", errno, strerror(errno));
+	}
+
+	pCtx->is_stop_recv = false;
 
 	pthread_mutex_init(&(pCtx->mutex), NULL);
 	pthread_cond_init(&(pCtx->cond), NULL);

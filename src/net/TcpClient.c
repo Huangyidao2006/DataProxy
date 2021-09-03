@@ -10,6 +10,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
 #include <string.h>
@@ -44,6 +45,8 @@ int TcpClientInit(TcpClientCtx* pCtx) {
 	if (ret < 0) {
         LOG_E("errno=%d, %s", errno, strerror(errno));
 	}
+
+	pCtx->is_stop_recv = false;
 
 	pthread_mutex_init(&(pCtx->mutex), NULL);
 	pthread_cond_init(&(pCtx->cond), NULL);
@@ -111,29 +114,32 @@ exit:
 	return NULL;
 }
 
-int TcpClientConnect(TcpClientCtx* pCtx) {
+int TcpClientConnect(TcpClientCtx* pCtx, const char* ip, unsigned short port) {
 	if (NULL == pCtx) {
 		LOG_E("pCtx is NULL");
 		return ERROR_NULL_PTR;
 	}
 
+	snprintf(pCtx->server_ip, IP_CHARS_LEN, "%s", ip);
+	pCtx->server_port = port;
+
 	struct sockaddr_in serverAddr;
 	bzero(&serverAddr, sizeof(serverAddr));
 	serverAddr.sin_family = AF_INET;
 	serverAddr.sin_addr.s_addr = inet_addr(pCtx->server_ip);
-	serverAddr.sin_port = pCtx->server_port;
+	serverAddr.sin_port = htons(pCtx->server_port);
+
+	LOG_D("connecting %s:%d", ip, port);
 
 	int ret = connect(pCtx->socket_fd, (struct sockaddr*) &serverAddr, sizeof(serverAddr));
     if (ret < 0) {
         LOG_E("errno=%d, %s", errno, strerror(errno));
     }
 
-	if (pCtx->is_noblock) {
-		int flags = fcntl(pCtx->socket_fd, F_GETFL, 0);
-		ret = fcntl(pCtx->socket_fd, F_SETFL, flags | O_NONBLOCK);
-		if (ret < 0) {
-			LOG_E("errno=%d, %s", errno, strerror(errno));
-		}
+	int flags = fcntl(pCtx->socket_fd, F_GETFL, 0);
+	ret = fcntl(pCtx->socket_fd, F_SETFL, flags | O_NONBLOCK);
+	if (ret < 0) {
+		LOG_E("errno=%d, %s", errno, strerror(errno));
 	}
 
 	pthread_t tid;

@@ -17,7 +17,6 @@ typedef struct {
 	unsigned short server_port;
 	unsigned short local_port;
 	int socket_fd;
-	bool is_noblock;
 	bool is_stop_recv;
 	char* recv_buffer;
 	int recv_buffer_len;
@@ -29,7 +28,7 @@ typedef struct {
 
 int TcpClientInit(TcpClientCtx* pCtx);
 
-int TcpClientConnect(TcpClientCtx* pCtx);
+int TcpClientConnect(TcpClientCtx* pCtx, const char* ip, unsigned short port);
 
 int TcpClientSend(TcpClientCtx* pCtx, const char* data, int len);
 

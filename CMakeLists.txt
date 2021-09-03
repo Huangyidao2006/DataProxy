@@ -5,7 +5,18 @@ include_directories(include)
 
 FILE(GLOB_RECURSE SRC_FILES "src/*/*.c")
 
-add_executable(data_proxy main.c ${SRC_FILES} include/net/UdpHelper.h src/net/UdpHelper.c)
-target_link_libraries(data_proxy
+add_executable(udp_demo udp_demo.c ${SRC_FILES})
+target_link_libraries(udp_demo
         pthread
         usb-1.0)
+
+add_executable(tcp_server_demo tcp_server_demo.c ${SRC_FILES})
+target_link_libraries(tcp_server_demo
+        pthread
+        usb-1.0)
+
+add_executable(tcp_client_demo tcp_client_demo.c ${SRC_FILES})
+target_link_libraries(tcp_client_demo
+        pthread
+        usb-1.0)
+

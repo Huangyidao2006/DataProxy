@@ -28,10 +28,9 @@ int main(int argc, char* argv[]) {
 	udpCtx.local_port = 5678;
 	udpCtx.recv_buffer = (char*) malloc (64 * 1024);
 	udpCtx.recv_buffer_len = 64 * 1024;
-	udpCtx.is_noblock = true;
 	udpCtx.is_stop_recv = false;
 	udpCtx.recv_cb = UdpRecvCb;
-	udpCtx.error_cb = UdpRecvCb;
+	udpCtx.error_cb = UdpErrorCb;
 
 	int ret = UdpHelperInit(&udpCtx);
 	LOG_D("init, ret=%d", ret);
