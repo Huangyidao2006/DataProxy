@@ -18,5 +18,6 @@ const static int ERROR_SOCK_SEND                  	= 11003;
 const static int ERROR_SOCK_ACCEPT                	= 11004;
 const static int ERROR_SOCK_TOO_MANY_CLIENTS		= 11005;
 const static int ERROR_SOCK_LISTEN					= 11006;
+const static int ERROR_USB_RECV						= 12001;
 
 #endif//DATAPROXY_ERROR_H
