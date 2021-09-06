@@ -24,6 +24,7 @@ static int usbSendCtrl(libusb_device_handle* pHandle, char* buff, int req, int i
 static int setupAccessory(libusb_device_handle* pHandle);
 
 static void* UsbMonitorThreadFunc(void* params);
+static void* UsbSetAccThreadFunc(void* params);
 static void* UsbRecvThreadFunc(void* params);
 
 int UsbPlugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_event event, void* user_data) {
@@ -34,7 +35,8 @@ int UsbPlugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_e
 
 	switch (event) {
 		case LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED: {
-			LOG_I("device ARRIVED, vid=%x, pid=%x", descriptor.idVendor, descriptor.idProduct);
+			LOG_I("device ARRIVED, vid=%x, pid=%x, bcdUSB=0x%x", descriptor.idVendor, descriptor.idProduct,
+				  descriptor.bcdUSB);
 
 			if (descriptor.idVendor == GOOGLE_VID) {
 				pthread_mutex_lock(&pInst->mutex);
@@ -99,10 +101,8 @@ int UsbPlugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_e
 					if (SUCCESS != ret) {
 						LOG_E("libusb_claim_interface, ret=%d, %s", ret, libusb_error_name(ret));
 					} else {
-						ret = setupAccessory(pHandle);
-						if (SUCCESS != ret) {
-							LOG_E("setupAccessory failed");
-						}
+						pthread_t tid;
+						pthread_create(&tid, NULL, UsbSetAccThreadFunc, pHandle);
 					}
 				}
 			}
@@ -123,6 +123,17 @@ int UsbPlugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_e
 	return 0;
 }
 
+static void* UsbSetAccThreadFunc(void* params) {
+	struct libusb_device_handle* pHandle = (libusb_device_handle*) params;
+
+    int ret = setupAccessory(pHandle);
+    if (SUCCESS != ret) {
+        LOG_E("setupAccessory failed");
+    }
+
+	return NULL;
+}
+
 static void* UsbMonitorThreadFunc(void* params) {
 	LOG_I("usb monitor started");
 
@@ -139,14 +150,9 @@ static void* UsbMonitorThreadFunc(void* params) {
 
 	while (!g_isStopMonitor) {
 		struct timeval tv = {1, 0};
-//		libusb_lock_events(g_pUsbCtx);
-//
+
 		int completed = 0;
 		int ret = libusb_handle_events_timeout_completed(g_pUsbCtx, &tv, &completed);
-//
-//		libusb_unlock_events(g_pUsbCtx);
-//		int ret = libusb_handle_events(g_pUsbCtx);
-
 		if (ret < 0) {
 			LOG_D("handle events failed: %s", libusb_error_name(ret));
 			break;
@@ -171,13 +177,15 @@ static void* UsbRecvThreadFunc(void* params) {
 	int ret, transferred;
 	while (!g_isStopRecv) {
 		ret = libusb_bulk_transfer(pHandle, EP_IN, (unsigned char*) pInst->recv_buffer,
-								   pInst->recv_buffer_len, &transferred, 0);
+								   pInst->recv_buffer_len, &transferred, 1000);
 		if (ret < 0) {
-			if (NULL != pInst->error_cb) {
-				pInst->error_cb(ERROR_USB_RECV, "usb recv error");
-			}
+			if (LIBUSB_ERROR_TIMEOUT != ret) {
+				if (NULL != pInst->error_cb) {
+					pInst->error_cb(ERROR_USB_RECV, "usb recv error");
+				}
 
-			goto error;
+				goto error;
+			}
 		} else {
 			pInst->recv_cb(pInst->recv_buffer, transferred);
 		}
@@ -214,7 +222,7 @@ static int setupAccessory(libusb_device_handle* pHandle) {
 		0,       //wIndex
 		ioBuffer,//data
 		2,       //wLength
-		0        //timeout
+		1000        //timeout
 	);
 
 	if (ret < 0) {
@@ -286,14 +294,11 @@ int UsbManagerInit(UsbManager* pInst) {
 		return ERROR_NULL_PTR;
 	}
 
-	int ret = 0;
-	if (NULL == g_pUsbCtx) {
-		ret = libusb_init(&g_pUsbCtx);
-		if (SUCCESS != ret) {
-			LOG_D("libusb_init, error=%d", ret);
-			return ERROR_FAILED;
-		}
-	}
+	int ret = libusb_init(&g_pUsbCtx);
+    if (SUCCESS != ret) {
+        LOG_D("libusb_init, error=%d", ret);
+        return ERROR_FAILED;
+    }
 
 	if (!libusb_has_capability(LIBUSB_CAP_HAS_HOTPLUG)) {
 		LOG_D("hotplug is not supported");
@@ -350,6 +355,7 @@ int UsbManagerDestroy(UsbManager* pInst) {
 	pthread_cond_destroy(&pInst->cond);
 
 	free(pInst->recv_buffer);
+	libusb_exit(g_pUsbCtx);
 
 	return SUCCESS;
 }

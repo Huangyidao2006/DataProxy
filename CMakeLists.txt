@@ -24,3 +24,8 @@ add_executable(usb_demo usb_demo.c ${SRC_FILES})
 target_link_libraries(usb_demo
         pthread
         usb-1.0)
+
+add_executable(queue_demo queue_demo.c ${SRC_FILES})
+target_link_libraries(queue_demo
+        pthread
+        usb-1.0)
