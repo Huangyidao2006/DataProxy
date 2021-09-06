@@ -137,7 +137,7 @@ static void* server_thread_func(void* params) {
 					if (ret > 0) {
 						pCtx->recv_cb(curInfo, recvBuffer, ret);
 					} else if (0 == ret) {
-						pCtx->error_cb(curInfo, ERROR_SOCK_REMOTE_CLOSE, "remote socket closed");
+						pCtx->error_cb(curInfo, ERROR_SOCK_REMOTE_CLOSE, "remote socket closed", pCtx);
 
 						close(curFd);
 						deleteClientInfoByFd(pCtx->clients, curFd);
@@ -146,7 +146,7 @@ static void* server_thread_func(void* params) {
 						if (EAGAIN == errno || EINTR == errno) {
 
 						} else {
-							pCtx->error_cb(curInfo, ERROR_SOCK_RECV, "receive error");
+							pCtx->error_cb(curInfo, ERROR_SOCK_RECV, "receive error", pCtx);
 
 							close(curFd);
 							deleteClientInfoByFd(pCtx->clients, curFd);

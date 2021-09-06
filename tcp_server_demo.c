@@ -14,7 +14,7 @@ void TcpServerAcceptCb(int fd, const char* ip, unsigned short port, void* pCtx) 
 	LOG_D("client connected, fd=%d, ip=%s, port=%d", fd, ip, port);
 }
 
-void TcpServerRecvCb(const ClientInfo* info, const char* data, int len) {
+void TcpServerRecvCb(const ClientInfo* info, const char* data, int len, void* pCtx) {
 	char* buffer = (char*) malloc(len + 1);
 	memcpy(buffer, data, len);
 	buffer[len] = '\0';
@@ -25,7 +25,7 @@ void TcpServerRecvCb(const ClientInfo* info, const char* data, int len) {
 	free(buffer);
 }
 
-void TcpServerErrorCb(const ClientInfo* info, int error, const char* des) {
+void TcpServerErrorCb(const ClientInfo* info, int error, const char* des, void* pCtx) {
 	LOG_D("error=%d, %s", error, des);
 }
 

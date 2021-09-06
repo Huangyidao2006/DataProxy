@@ -19,8 +19,8 @@ typedef struct {
 } ClientInfo;
 
 typedef void (*TcpServerAcceptCbFunc)(int fd, const char* ip, unsigned short port, void* pCtx);
-typedef void (*TcpServerRecvCbFunc)(const ClientInfo* info, const char* data, int len);
-typedef void (*TcpServerErrorCbFunc)(const ClientInfo* info, int error, const char* des);
+typedef void (*TcpServerRecvCbFunc)(const ClientInfo* info, const char* data, int len, void* pCtx);
+typedef void (*TcpServerErrorCbFunc)(const ClientInfo* info, int error, const char* des, void* pCtx);
 
 typedef struct {
 	unsigned short local_port;
