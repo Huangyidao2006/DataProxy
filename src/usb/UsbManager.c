@@ -87,8 +87,7 @@ int UsbPlugCallback(libusb_context* ctx, libusb_device* device, libusb_hotplug_e
 
 				pthread_mutex_unlock(&pInst->mutex);
 
-				pthread_t tid;
-				pthread_create(&tid, NULL, UsbRecvThreadFunc, pInst);
+				pthread_create(&pInst->recv_tid, NULL, UsbRecvThreadFunc, pInst);
 			} else {
 				// try to open the arrived device
 				libusb_device_handle* pHandle = libusb_open_device_with_vid_pid(g_pUsbCtx, descriptor.idVendor, descriptor.idProduct);
@@ -149,7 +148,7 @@ static void* UsbMonitorThreadFunc(void* params) {
 									 &cb_handle);
 
 	while (!g_isStopMonitor) {
-		struct timeval tv = {1, 0};
+		struct timeval tv = {0, 500 * 1000};
 
 		int completed = 0;
 		int ret = libusb_handle_events_timeout_completed(g_pUsbCtx, &tv, &completed);
@@ -313,8 +312,7 @@ int UsbManagerInit(UsbManager* pInst) {
 	pthread_cond_init(&pInst->cond, NULL);
 
 	g_isStopMonitor = false;
-	pthread_t tid;
-	pthread_create(&tid, NULL, UsbMonitorThreadFunc, pInst);
+	pthread_create(&pInst->monitor_tid, NULL, UsbMonitorThreadFunc, pInst);
 
 	return SUCCESS;
 }
@@ -340,9 +338,13 @@ int UsbManagerDestroy(UsbManager* pInst) {
 		return ERROR_NULL_PTR;
 	}
 
+	if (!g_isStopMonitor) {
+		g_isStopMonitor = true;
+		pthread_join(pInst->monitor_tid, NULL);
+	}
+
 	pthread_mutex_lock(&pInst->mutex);
 
-	g_isStopMonitor = true;
 	g_isStopRecv = true;
 
 	if (g_isRecvStarted) {
@@ -355,6 +357,7 @@ int UsbManagerDestroy(UsbManager* pInst) {
 	pthread_cond_destroy(&pInst->cond);
 
 	free(pInst->recv_buffer);
+
 	libusb_exit(g_pUsbCtx);
 
 	return SUCCESS;

@@ -5,6 +5,10 @@
 #ifndef DATAPROXY_TIME_H
 #define DATAPROXY_TIME_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 long long currentTimeMillis();
 
 /**
@@ -16,5 +20,9 @@ long long currentTimeMillis();
  * @return
  */
 int getCurrentTime(const char* fmt, char* buffer, int len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//DATAPROXY_TIME_H

@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.6.2)
-project(DataProxy C)
+project(DataProxy)
 
-include_directories(include)
+set(CMAKE_CXX_STANDARD 11)
 
-FILE(GLOB_RECURSE SRC_FILES "src/*/*.c")
+include_directories(include
+        3rdparty/protobuf-3.14.x/src)
+
+FILE(GLOB_RECURSE SRC_FILES "src/*/*.c" "src/*/*.cpp" "src/*/*.cc")
+
+add_subdirectory(3rdparty/protobuf-3.14.x/cmake)
 
 add_executable(udp_demo udp_demo.c ${SRC_FILES})
 target_link_libraries(udp_demo
@@ -20,8 +25,9 @@ target_link_libraries(tcp_client_demo
         pthread
         usb-1.0)
 
-add_executable(usb_demo usb_demo.c ${SRC_FILES})
+add_executable(usb_demo usb_demo.cpp ${SRC_FILES})
 target_link_libraries(usb_demo
+        protobuf-lite
         pthread
         usb-1.0)
 

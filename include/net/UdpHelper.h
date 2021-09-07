@@ -8,17 +8,23 @@
 #include <stdbool.h>
 #include <pthread.h>
 
-typedef void (*UdpHelperRecvCbFunc)(const char* data, int len, void* pCtx);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void (*UdpHelperRecvCbFunc)(const char* ip, unsigned short port,
+									const char* data, int len, void* pCtx);
 typedef void (*UdpHelperErrorCbFunc)(int error, const char* des, void* pCtx);
 
 typedef struct {
-    int socket_fd;
-    unsigned short local_port;
-    bool is_stop_recv;
-    char* recv_buffer;
-    int recv_buffer_len;
-    pthread_mutex_t mutex;
-    pthread_cond_t cond;
+	int conn_id;
+	int socket_fd;
+	unsigned short local_port;
+	bool is_stop_recv;
+	char* recv_buffer;
+	int recv_buffer_len;
+	pthread_mutex_t mutex;
+	pthread_cond_t cond;
 	UdpHelperRecvCbFunc recv_cb;
 	UdpHelperErrorCbFunc error_cb;
 } UdpHelperCtx;
@@ -31,5 +37,9 @@ int UdpHelperSend(UdpHelperCtx* pCtx, const char* toIP, unsigned short toPort,
 int UdpHelperClose(UdpHelperCtx* pCtx);
 
 int UdpHelperRelease(UdpHelperCtx* pCtx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//DATAPROXY_UDPHELPER_H

@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-void UdpRecvCb(const char* data, int len, void* pCtx) {
+void UdpRecvCb(const char* ip, unsigned short port, const char* data, int len, void* pCtx) {
 	char* s = (char*) malloc(len + 1);
 	memcpy(s, data, len);
 	s[len] = '\0';
@@ -26,9 +26,6 @@ void UdpErrorCb(int error, const char* des, void* pCtx) {
 int main(int argc, char* argv[]) {
 	UdpHelperCtx udpCtx;
 	udpCtx.local_port = 5678;
-	udpCtx.recv_buffer = (char*) malloc (64 * 1024);
-	udpCtx.recv_buffer_len = 64 * 1024;
-	udpCtx.is_stop_recv = false;
 	udpCtx.recv_cb = UdpRecvCb;
 	udpCtx.error_cb = UdpErrorCb;
 

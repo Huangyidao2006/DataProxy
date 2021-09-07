@@ -46,6 +46,7 @@ int TcpClientInit(TcpClientCtx* pCtx) {
         LOG_E("errno=%d, %s", errno, strerror(errno));
 	}
 
+	pCtx->conn_id = 0;
 	pCtx->is_stop_recv = false;
 
 	pthread_mutex_init(&(pCtx->mutex), NULL);
@@ -179,7 +180,7 @@ int TcpClientSend(TcpClientCtx* pCtx, const char* data, int len) {
 		}
 	}
 
-	return len;
+	return offset;
 }
 
 int TcpClientClose(TcpClientCtx* pCtx) {

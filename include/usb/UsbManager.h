@@ -16,11 +16,15 @@
 #include "common/Error.h"
 #include "log/Log.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define EP_IN 0x81
 #define EP_OUT 0x01
 
 #define GOOGLE_VID 0x18d1
-#define ACCESSORY_PID 0x2d01     /* accessory with adb */
+#define ACCESSORY_PID 0x2d01 /* accessory with adb */
 #define ACCESSORY_PID_ALT 0x2d00 /* accessory without adb */
 
 /*64 bytes for USB full-speed accessories
@@ -56,6 +60,8 @@ typedef struct {
 	UsbManagerErrorCbFunc error_cb;
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
+	pthread_t monitor_tid;
+	pthread_t recv_tid;
 } UsbManager;
 
 int UsbManagerInit(UsbManager* pInst);
@@ -63,5 +69,9 @@ int UsbManagerInit(UsbManager* pInst);
 int UsbManagerSend(UsbManager* pInst, char* data, int len);
 
 int UsbManagerDestroy(UsbManager* pInst);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//DATAPROXY_USBMANAGER_H

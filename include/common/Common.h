@@ -7,6 +7,14 @@
 
 #define IP_CHARS_LEN 16
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void sleepMs(int timeMs);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//DATAPROXY_COMMON_H

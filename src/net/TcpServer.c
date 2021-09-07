@@ -135,7 +135,7 @@ static void* server_thread_func(void* params) {
 					ret = recv(curFd, recvBuffer, RECV_BUFFER_LEN, 0);
 
 					if (ret > 0) {
-						pCtx->recv_cb(curInfo, recvBuffer, ret);
+						pCtx->recv_cb(curInfo, recvBuffer, ret, pCtx);
 					} else if (0 == ret) {
 						pCtx->error_cb(curInfo, ERROR_SOCK_REMOTE_CLOSE, "remote socket closed", pCtx);
 
@@ -186,12 +186,12 @@ static void* server_thread_func(void* params) {
 					} else {
 						close(remoteFd);
 
-						pCtx->error_cb(NULL, ERROR_SOCK_TOO_MANY_CLIENTS, "too many clients");
+						pCtx->error_cb(NULL, ERROR_SOCK_TOO_MANY_CLIENTS, "too many clients", pCtx);
 					}
 				} else {
 					LOG_E("errno=%d, %s", errno, strerror(errno));
 
-					pCtx->error_cb(NULL, ERROR_SOCK_SEND, "accept error");
+					pCtx->error_cb(NULL, ERROR_SOCK_SEND, "accept error", pCtx);
 
 					goto error;
 				}
@@ -201,7 +201,7 @@ static void* server_thread_func(void* params) {
 		} else if (ret < 0) {
 			LOG_E("errno=%d, %s", errno, strerror(errno));
 
-			pCtx->error_cb(NULL, ERROR_SELECT, "select error");
+			pCtx->error_cb(NULL, ERROR_SELECT, "select error", pCtx);
 
 			goto error;
 		}
@@ -278,7 +278,7 @@ int TcpServerSend(TcpServerCtx* pCtx, int remoteFd, const char* data, int len) {
 			} else {
 				LOG_E("errno=%d, %s", errno, strerror(errno));
 
-				pCtx->error_cb(NULL, ERROR_SOCK_SEND, "send error");
+				pCtx->error_cb(NULL, ERROR_SOCK_SEND, "send error", pCtx);
 				break;
 			}
 		}

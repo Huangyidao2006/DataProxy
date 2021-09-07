@@ -10,6 +10,10 @@
 #include <stdbool.h>
 #include <pthread.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAX_CLIENT_COUNT 100
 
 typedef struct {
@@ -45,5 +49,9 @@ int TcpServerSend(TcpServerCtx* pCtx, int remoteFd, const char* data, int len);
 int TcpServerStop(TcpServerCtx* pCtx);
 
 int TcpServerRelease(TcpServerCtx* pCtx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//DATAPROXY_TCPSERVER_H

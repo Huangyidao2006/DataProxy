@@ -5,7 +5,11 @@
 #ifndef DATAPROXY_LOG_H
 #define DATAPROXY_LOG_H
 
-typedef enum _LogLevel {
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
 	SDK_DEBUG,
 	SDK_INFO,
 	SDK_WARN,
@@ -27,5 +31,9 @@ typedef enum _LogLevel {
 void setLogLevel(LogLevel level);
 
 void printLog(LogLevel level, const char* filename, int line, const char* fmt, ...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif//DATAPROXY_LOG_H

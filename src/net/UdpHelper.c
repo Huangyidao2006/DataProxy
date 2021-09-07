@@ -44,7 +44,11 @@ static void* recv_thread_func(void* params) {
 			if (len > 0) {
 				count = 0;
 
-				pCtx->recv_cb(pCtx->recv_buffer, len, pCtx);
+				char remoteIP[IP_CHARS_LEN] = {0};
+				inet_ntop(AF_INET, &oppoAddr, remoteIP, sizeof(remoteIP));
+				unsigned short remotePort = ntohs(oppoAddr.sin_port);
+
+				pCtx->recv_cb(remoteIP, remotePort, pCtx->recv_buffer, len, pCtx);
 			} else if (0 == len) {
 				pCtx->error_cb(ERROR_SOCK_REMOTE_CLOSE, "remote socket closed", pCtx);
 
@@ -91,6 +95,8 @@ int UdpHelperInit(UdpHelperCtx* pCtx) {
 		return ERROR_NULL_PTR;
 	}
 
+	pCtx->recv_buffer = NULL;
+
 	int fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) {
 		LOG_E("errno=%d, %s", errno, strerror(errno));
@@ -116,6 +122,10 @@ int UdpHelperInit(UdpHelperCtx* pCtx) {
 		LOG_E("errno=%d, %s", errno, strerror(errno));
 	}
 
+	pCtx->recv_buffer = (char*) malloc (64 * 1024);
+	pCtx->recv_buffer_len = 64 * 1024;
+
+	pCtx->conn_id = 0;
 	pCtx->is_stop_recv = false;
 
 	pthread_mutex_init(&(pCtx->mutex), NULL);
