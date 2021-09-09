@@ -57,6 +57,8 @@ void processUsbFrame(const string& frameData);
 void sendEmptyMessage(int msgType);
 
 void UsbManagerRecvCb(const char* data, int len) {
+	LOG_D("UsbManagerRecvCb, dataLen=%d", len);
+
 	g_UsbFrameBuffer.append(data, len);
 
 	while (true) {
@@ -130,6 +132,13 @@ public:
 map<int, shared_ptr<Connection>> g_NetConnMap;
 int32_t g_SendMsgId = 1;
 
+static int32_t getMsgId() {
+	int32_t id = g_SendMsgId;
+	g_SendMsgId = (g_SendMsgId + 1) % INT32_MAX;
+
+	return id;
+}
+
 shared_ptr<Connection> findConnection(int32_t connId) {
 	auto it = g_NetConnMap.find(connId);
 	if (it == g_NetConnMap.end()) {
@@ -197,16 +206,22 @@ string proxyMsgToFrame(std::shared_ptr<ProxyMsg>& msg) {
 	return frame;
 }
 
+/**
+ * 注意：arg1为错误码，arg2为返回值，arg3为错误描述，arg4为数据。
+ */
 void processTcpMsg(std::shared_ptr<ProxyMsg>& msg) {
 	int32_t connId = msg->connid();
 	const string& ip = msg->ip();
 	int32_t port = msg->port();
 
 	switch (msg->msgtype()) {
-		case MsgType::CONNECT: {
+		case MsgType::CREATE: {
+			LOG_D("processTcpMsg, Create, msgId=%d, ackId=%d, connId=%d, port=%d",
+				  msg->msgid(), msg->ackid(), connId, msg->port());
+
 			auto* pTcpClientCtx = new TcpClientCtx;
 			pTcpClientCtx->conn_id = connId;
-			pTcpClientCtx->local_port = 0;
+			pTcpClientCtx->local_port = msg->port();
 			pTcpClientCtx->recv_cb = TcpClientRecvCb;
 			pTcpClientCtx->error_cb = TcpClientErrorCb;
 
@@ -217,14 +232,32 @@ void processTcpMsg(std::shared_ptr<ProxyMsg>& msg) {
 				return;
 			}
 
-			ret = TcpClientConnect(pTcpClientCtx, ip.c_str(), port);
+			// save connection to map
+			g_NetConnMap[msg->connid()] = make_shared<Connection>(ConnType::TCP, pTcpClientCtx);
+
+			sendMessage(0, msg->msgid(), connId, ConnType::TCP,
+						MsgType::RESULT, ip, port,
+						0, 0, "create success", "");
+		} break;
+
+		case MsgType::CONNECT: {
+			auto pConn = findConnection(connId);
+			if (pConn == nullptr) {
+				sendMessage(0, msg->msgid(), connId, ConnType::TCP,
+							MsgType::ERROR, ip, port,
+							ERROR_NO_SUCH_CONN, 0, "no such connection", "");
+				return;
+			}
+
+			int ret = TcpClientConnect(pConn->m_pTcpClientCtx, ip.c_str(), port);
 			if (SUCCESS != ret) {
 				sendMessage(0, msg->msgid(), connId, ConnType::TCP,
 							MsgType::ERROR, ip, port, ret, 0, "", "");
 			}
 
-			// save connection to map
-			g_NetConnMap[msg->connid()] = make_shared<Connection>(ConnType::TCP, pTcpClientCtx);
+			sendMessage(0, msg->msgid(), connId, ConnType::TCP,
+						MsgType::RESULT, ip, port,
+						0, 0, "connect success", "");
 		} break;
 
 		case MsgType::SEND: {
@@ -275,9 +308,16 @@ void processTcpMsg(std::shared_ptr<ProxyMsg>& msg) {
 		case MsgType::RECV:
 		case MsgType::ERROR:
 		case MsgType::RESULT: {	// send to usb
-			msg->set_msgid(g_SendMsgId++);
+			msg->set_msgid(getMsgId());
+
+			LOG_D("processTcpMsg, SendToUsb, msgId=%d, ackId=%d, connId=%d, msgType=%d, arg1=%d, arg2=%d, arg3=%s, arg4_len=%d",
+				  msg->msgid(), msg->ackid(), connId, msg->msgtype(), msg->data().arg1(), msg->data().arg2(),
+				  msg->data().arg3().c_str(), msg->data().arg4().length());
+
 			string frame = proxyMsgToFrame(msg);
 			int ret = sendToUsb(frame.c_str(), frame.length());
+			LOG_D("sendToUsb, ret=%d", ret);
+
 			if (frame.length() != ret) {
 				// TODO usb发送出错
 			}
@@ -361,7 +401,7 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 		case MsgType::RECV:
 		case MsgType::ERROR:
 		case MsgType::RESULT: {	// send to usb
-			msg->set_msgid(g_SendMsgId++);
+			msg->set_msgid(getMsgId());
 			string frame = proxyMsgToFrame(msg);
 			int ret = sendToUsb(frame.c_str(), frame.length());
 			if (frame.length() != ret) {
@@ -430,9 +470,13 @@ void sendEmptyMessage(int msgType) {
 void processUsbFrame(const string& frameData) {
 	shared_ptr<ProxyMsg> proxyMsg = make_shared<ProxyMsg>();
 	if (proxyMsg->ParseFromString(frameData)) {
+		LOG_D("processUsbFrame, parse ProxyMsg success");
+
 		if (g_pProxyMsgHandler != nullptr) {
 			g_pProxyMsgHandler->sendMessage(MSG_PROCESS_PROXY_MESSAGE, proxyMsg);
 		}
+	} else {
+		LOG_D("processUsbFrame, parse ProxyMsg failed");
 	}
 }
 
