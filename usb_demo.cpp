@@ -148,7 +148,7 @@ shared_ptr<Connection> findConnection(int32_t connId) {
 	return it->second;
 }
 
-void remoteConnection(int32_t connId) {
+void removeConnection(int32_t connId) {
 	auto it = g_NetConnMap.find(connId);
 	if (it != g_NetConnMap.end()) {
 		g_NetConnMap.erase(it);
@@ -167,7 +167,7 @@ void TcpClientRecvCb(const char* data, int len, void* pCtx) {
 	string recvData(data, len);
 	auto pTcpClientCtx = (TcpClientCtx*) pCtx;
 
-	sendMessage(0, 0, pTcpClientCtx->conn_id, ConnType::TCP, MsgType::RECV,
+	sendMessage(0, -1, pTcpClientCtx->conn_id, ConnType::TCP, MsgType::RECV,
 				pTcpClientCtx->server_ip, pTcpClientCtx->server_port, 0, 0, "", recvData);
 }
 
@@ -175,7 +175,7 @@ void TcpClientErrorCb(int error, const char* des, void* pCtx) {
 	string desStr = des;
 	auto pTcpClientCtx = (TcpClientCtx*) pCtx;
 
-	sendMessage(0, 0, pTcpClientCtx->conn_id, ConnType::TCP, MsgType::ERROR,
+	sendMessage(0, -1, pTcpClientCtx->conn_id, ConnType::TCP, MsgType::ERROR,
 				pTcpClientCtx->server_ip, pTcpClientCtx->server_port, error, 0, desStr, "");
 }
 
@@ -184,7 +184,7 @@ void UdpRecvCb(const char* ip, unsigned short port, const char* data, int len, v
 	string recvData(data, len);
 	auto pUdpClientCtx = (UdpHelperCtx *) pCtx;
 
-	sendMessage(0, 0, pUdpClientCtx->conn_id, ConnType::UDP, MsgType::RECV,
+	sendMessage(0, -1, pUdpClientCtx->conn_id, ConnType::UDP, MsgType::RECV,
 				ip, port, 0, 0, "", recvData);
 }
 
@@ -192,7 +192,7 @@ void UdpErrorCb(int error, const char* des, void* pCtx) {
 	string desStr = des;
 	auto pUdpClientCtx = (UdpHelperCtx*) pCtx;
 
-	sendMessage(0, 0, pUdpClientCtx->conn_id, ConnType::UDP, MsgType::ERROR,
+	sendMessage(0, -1, pUdpClientCtx->conn_id, ConnType::UDP, MsgType::ERROR,
 				"", 0, error, 0, desStr, "");
 }
 
@@ -216,7 +216,7 @@ void processTcpMsg(std::shared_ptr<ProxyMsg>& msg) {
 
 	switch (msg->msgtype()) {
 		case MsgType::CREATE: {
-			LOG_D("processTcpMsg, Create, msgId=%d, ackId=%d, connId=%d, port=%d",
+			LOG_D("processTcpMsg, CREATE, msgId=%d, ackId=%d, connId=%d, port=%d",
 				  msg->msgid(), msg->ackid(), connId, msg->port());
 
 			auto* pTcpClientCtx = new TcpClientCtx;
@@ -224,6 +224,7 @@ void processTcpMsg(std::shared_ptr<ProxyMsg>& msg) {
 			pTcpClientCtx->local_port = msg->port();
 			pTcpClientCtx->recv_cb = TcpClientRecvCb;
 			pTcpClientCtx->error_cb = TcpClientErrorCb;
+			pTcpClientCtx->recv_buffer = NULL;
 
 			int ret = TcpClientInit(pTcpClientCtx);
 			if (SUCCESS != ret) {
@@ -241,6 +242,9 @@ void processTcpMsg(std::shared_ptr<ProxyMsg>& msg) {
 		} break;
 
 		case MsgType::CONNECT: {
+			LOG_D("processTcpMsg, CONNECT, msgId=%d, ackId=%d, connId=%d, ip=%s, port=%d",
+				  msg->msgid(), msg->ackid(), connId, msg->ip().c_str(), msg->port());
+
 			auto pConn = findConnection(connId);
 			if (pConn == nullptr) {
 				sendMessage(0, msg->msgid(), connId, ConnType::TCP,
@@ -261,6 +265,9 @@ void processTcpMsg(std::shared_ptr<ProxyMsg>& msg) {
 		} break;
 
 		case MsgType::SEND: {
+			LOG_D("processTcpMsg, SEND, msgId=%d, ackId=%d, connId=%d, port=%d",
+				  msg->msgid(), msg->ackid(), connId, msg->port());
+
 			auto pConn = findConnection(connId);
 			if (pConn == nullptr) {
 				sendMessage(0, msg->msgid(), connId, ConnType::TCP,
@@ -276,13 +283,16 @@ void processTcpMsg(std::shared_ptr<ProxyMsg>& msg) {
 							MsgType::ERROR, ip, port,
 							ret, 0, "send error", "");
 			} else {
-				sendMessage(0, 0, connId, ConnType::TCP,
+				sendMessage(0, msg->msgid(), connId, ConnType::TCP,
 							MsgType::RESULT, ip, port,
 							0, ret, "send success", "");
 			}
 		} break;
 
 		case MsgType::CLOSE: {
+			LOG_D("processTcpMsg, CLOSE, msgId=%d, ackId=%d, connId=%d, port=%d",
+				  msg->msgid(), msg->ackid(), connId, msg->port());
+
 			auto pConn = findConnection(connId);
 			if (pConn == nullptr) {
 				sendMessage(0, msg->msgid(), connId, ConnType::TCP,
@@ -297,9 +307,9 @@ void processTcpMsg(std::shared_ptr<ProxyMsg>& msg) {
 							MsgType::ERROR, ip, port,
 							ret, 0, "close error", "");
 			} else {
-				remoteConnection(connId);
+				removeConnection(connId);
 
-				sendMessage(0, 0, connId, ConnType::TCP,
+				sendMessage(0, msg->msgid(), connId, ConnType::TCP,
 							MsgType::RESULT, ip, port,
 							0, 0, "close success", "");
 			}
@@ -335,9 +345,13 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 
 	switch (msg->msgtype()) {
 		case MsgType::CREATE: {
+			LOG_D("processUdpMsg, CREATE, msgId=%d, ackId=%d, connId=%d, port=%d",
+				  msg->msgid(), msg->ackid(), connId, msg->port());
+
 			auto* pUdpHelperCtx = new UdpHelperCtx ;
 			pUdpHelperCtx->conn_id = connId;
 			pUdpHelperCtx->local_port = 0;
+			pUdpHelperCtx->recv_buffer = NULL;
 			pUdpHelperCtx->recv_cb = UdpRecvCb;
 			pUdpHelperCtx->error_cb = UdpErrorCb;
 
@@ -350,9 +364,16 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 
 			// save connection to map
 			g_NetConnMap[connId] = make_shared<Connection>(ConnType::UDP, pUdpHelperCtx);
+
+			sendMessage(0, msg->msgid(), connId, ConnType::UDP,
+						MsgType::RESULT, ip, port,
+						0, 0, "create success", "");
 		} break;
 
 		case MsgType::SEND: {
+			LOG_D("processUdpMsg, SEND, msgId=%d, ackId=%d, connId=%d, port=%d",
+				  msg->msgid(), msg->ackid(), connId, msg->port());
+
 			auto pConn = findConnection(connId);
 			if (pConn == nullptr) {
 				sendMessage(0, msg->msgid(), connId, ConnType::UDP,
@@ -369,13 +390,16 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 							MsgType::ERROR, ip, port,
 							ret, 0, "send error", "");
 			} else {
-				sendMessage(0, 0, connId, ConnType::UDP,
+				sendMessage(0, msg->msgid(), connId, ConnType::UDP,
 							MsgType::RESULT, ip, port,
 							0, ret, "send success", "");
 			}
 		} break;
 
 		case MsgType::CLOSE: {
+			LOG_D("processUdpMsg, CLOSE, msgId=%d, ackId=%d, connId=%d, port=%d",
+				  msg->msgid(), msg->ackid(), connId, msg->port());
+
 			auto pConn = findConnection(connId);
 			if (pConn == nullptr) {
 				sendMessage(0, msg->msgid(), connId, ConnType::UDP,
@@ -390,9 +414,9 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 							MsgType::ERROR, ip, port,
 							ret, 0, "close error", "");
 			} else {
-				remoteConnection(connId);
+				removeConnection(connId);
 
-				sendMessage(0, 0, connId, ConnType::UDP,
+				sendMessage(0, msg->msgid(), connId, ConnType::UDP,
 							MsgType::RESULT, ip, port,
 							0, 0, "close success", "");
 			}
@@ -402,6 +426,11 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 		case MsgType::ERROR:
 		case MsgType::RESULT: {	// send to usb
 			msg->set_msgid(getMsgId());
+
+			LOG_D("processUdpMsg, SendToUsb, msgId=%d, ackId=%d, connId=%d, msgType=%d, arg1=%d, arg2=%d, arg3=%s, arg4_len=%d",
+				  msg->msgid(), msg->ackid(), connId, msg->msgtype(), msg->data().arg1(), msg->data().arg2(),
+				  msg->data().arg3().c_str(), msg->data().arg4().length());
+
 			string frame = proxyMsgToFrame(msg);
 			int ret = sendToUsb(frame.c_str(), frame.length());
 			if (frame.length() != ret) {

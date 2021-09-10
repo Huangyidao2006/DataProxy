@@ -21,6 +21,7 @@
 #include <sys/select.h>
 
 #define MAX_TRY_COUNT 20
+#define DEF_RECV_BUFFER_LEN (1024 * 1024)
 
 int TcpClientInit(TcpClientCtx* pCtx) {
 	if (NULL == pCtx) {
@@ -29,6 +30,17 @@ int TcpClientInit(TcpClientCtx* pCtx) {
 
 	int fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd < 0) {
+		LOG_E("errno=%d, %s", errno, strerror(errno));
+		return ERROR_FAILED;
+	}
+
+	int flag = 1, len = sizeof(int);
+	if (-1 == setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &flag, len)) {
+		LOG_E("errno=%d, %s", errno, strerror(errno));
+		return ERROR_FAILED;
+	}
+
+	if (-1 == setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &flag, len)) {
 		LOG_E("errno=%d, %s", errno, strerror(errno));
 		return ERROR_FAILED;
 	}
@@ -46,8 +58,12 @@ int TcpClientInit(TcpClientCtx* pCtx) {
         LOG_E("errno=%d, %s", errno, strerror(errno));
 	}
 
-	pCtx->conn_id = 0;
 	pCtx->is_stop_recv = false;
+
+	if (NULL == pCtx->recv_buffer) {
+		pCtx->recv_buffer = (char*) malloc(DEF_RECV_BUFFER_LEN);
+		pCtx->recv_buffer_len = DEF_RECV_BUFFER_LEN;
+	}
 
 	pthread_mutex_init(&(pCtx->mutex), NULL);
 	pthread_cond_init(&(pCtx->cond), NULL);
@@ -56,6 +72,8 @@ int TcpClientInit(TcpClientCtx* pCtx) {
 }
 
 static void* recv_thread_func(void* params) {
+	LOG_I("receive thread started");
+
     TcpClientCtx* pCtx = (TcpClientCtx*) params;
 
 	int count = 0;
@@ -111,6 +129,8 @@ exit:
     pthread_cond_signal(&(pCtx->cond));
 
     pthread_mutex_unlock(&(pCtx->mutex));
+
+	LOG_I("receive thread stopped");
 
 	return NULL;
 }

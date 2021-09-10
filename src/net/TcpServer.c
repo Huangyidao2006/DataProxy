@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <sys/select.h>
 
-#define RECV_BUFFER_LEN (1024 * 64)
+#define RECV_BUFFER_LEN (1024 * 1024)
 #define MAX_TRY_COUNT 20
 
 static ClientInfo* getClientInfoByFd(ClientInfo* pClientInfos, int fd) {
@@ -74,6 +74,17 @@ int TcpServerInit(TcpServerCtx* pCtx) {
 
 	int fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (fd < 0) {
+		LOG_E("errno=%d, %s", errno, strerror(errno));
+		return ERROR_FAILED;
+	}
+
+	int flag = 1, len = sizeof(int);
+	if (-1 == setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &flag, len)) {
+		LOG_E("errno=%d, %s", errno, strerror(errno));
+		return ERROR_FAILED;
+	}
+
+	if (-1 == setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &flag, len)) {
 		LOG_E("errno=%d, %s", errno, strerror(errno));
 		return ERROR_FAILED;
 	}
@@ -256,12 +267,12 @@ int TcpServerStart(TcpServerCtx* pCtx) {
 int TcpServerSend(TcpServerCtx* pCtx, int remoteFd, const char* data, int len) {
 	if (NULL == pCtx) {
 		LOG_E("pCtx is NULL");
-		return ERROR_NULL_PTR;
+		return -ERROR_NULL_PTR;
 	}
 
 	if (pCtx->socket_fd <= 0) {
 		LOG_E("socket_fd is invalid");
-		return ERROR_INVALID_FD;
+		return -ERROR_INVALID_FD;
 	}
 
 	int count = 0;
@@ -284,7 +295,7 @@ int TcpServerSend(TcpServerCtx* pCtx, int remoteFd, const char* data, int len) {
 		}
 	}
 
-	return len;
+	return offset;
 }
 
 int TcpServerStop(TcpServerCtx* pCtx) {

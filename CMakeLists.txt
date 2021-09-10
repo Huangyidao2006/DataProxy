@@ -7,6 +7,8 @@ include_directories(include
         3rdparty/protobuf-3.14.x/src)
 
 FILE(GLOB_RECURSE SRC_FILES "src/*/*.c" "src/*/*.cpp" "src/*/*.cc")
+LIST(FILTER SRC_FILES EXCLUDE REGEX "proxy.pb.cc")
+AUX_SOURCE_DIRECTORY(src/proto PROTO_SRC_FILES)
 
 add_subdirectory(3rdparty/protobuf-3.14.x/cmake)
 
@@ -25,7 +27,7 @@ target_link_libraries(tcp_client_demo
         pthread
         usb-1.0)
 
-add_executable(usb_demo usb_demo.cpp ${SRC_FILES})
+add_executable(usb_demo usb_demo.cpp ${SRC_FILES} ${PROTO_SRC_FILES})
 target_link_libraries(usb_demo
         protobuf-lite
         pthread

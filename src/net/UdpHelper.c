@@ -20,6 +20,7 @@
 #include <unistd.h>
 
 #define MAX_TRY_COUNT 20
+#define DEF_RECV_BUFFER_LEN (1024 * 64)
 
 static void* recv_thread_func(void* params) {
 	UdpHelperCtx* pCtx = (UdpHelperCtx*) params;
@@ -122,10 +123,11 @@ int UdpHelperInit(UdpHelperCtx* pCtx) {
 		LOG_E("errno=%d, %s", errno, strerror(errno));
 	}
 
-	pCtx->recv_buffer = (char*) malloc (64 * 1024);
-	pCtx->recv_buffer_len = 64 * 1024;
+	if (NULL == pCtx->recv_buffer) {
+		pCtx->recv_buffer = (char*) malloc(DEF_RECV_BUFFER_LEN);
+		pCtx->recv_buffer_len = DEF_RECV_BUFFER_LEN;
+	}
 
-	pCtx->conn_id = 0;
 	pCtx->is_stop_recv = false;
 
 	pthread_mutex_init(&(pCtx->mutex), NULL);
