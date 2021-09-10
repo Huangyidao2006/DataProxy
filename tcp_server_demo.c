@@ -22,7 +22,7 @@ typedef struct {
 void* send_thread_func(void* params) {
 	SendCtx* pSendCtx = (SendCtx*) params;
 
-	FILE* fp = fopen("yueyawan.mp3", "rb");
+	FILE* fp = fopen("../assets/yueyawan.mp3", "rb");
 	if (fp != NULL) {
 		char buffer[SEND_FRAME_LEN];
 		while (true) {

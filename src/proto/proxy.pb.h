@@ -91,12 +91,13 @@ enum MsgType : int {
   ERROR = 4,
   CREATE = 5,
   RESULT = 6,
+  CLOSE_ALL = 7,
   MsgType_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::min(),
   MsgType_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::PROTOBUF_NAMESPACE_ID::int32>::max()
 };
 bool MsgType_IsValid(int value);
 constexpr MsgType MsgType_MIN = CONNECT;
-constexpr MsgType MsgType_MAX = RESULT;
+constexpr MsgType MsgType_MAX = CLOSE_ALL;
 constexpr int MsgType_ARRAYSIZE = MsgType_MAX + 1;
 
 const std::string& MsgType_Name(MsgType value);

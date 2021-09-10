@@ -107,16 +107,18 @@ bool MsgType_IsValid(int value) {
     case 4:
     case 5:
     case 6:
+    case 7:
       return true;
     default:
       return false;
   }
 }
 
-static ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<std::string> MsgType_strings[7] = {};
+static ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<std::string> MsgType_strings[8] = {};
 
 static const char MsgType_names[] =
   "CLOSE"
+  "CLOSE_ALL"
   "CONNECT"
   "CREATE"
   "ERROR"
@@ -126,22 +128,24 @@ static const char MsgType_names[] =
 
 static const ::PROTOBUF_NAMESPACE_ID::internal::EnumEntry MsgType_entries[] = {
   { {MsgType_names + 0, 5}, 3 },
-  { {MsgType_names + 5, 7}, 0 },
-  { {MsgType_names + 12, 6}, 5 },
-  { {MsgType_names + 18, 5}, 4 },
-  { {MsgType_names + 23, 4}, 2 },
-  { {MsgType_names + 27, 6}, 6 },
-  { {MsgType_names + 33, 4}, 1 },
+  { {MsgType_names + 5, 9}, 7 },
+  { {MsgType_names + 14, 7}, 0 },
+  { {MsgType_names + 21, 6}, 5 },
+  { {MsgType_names + 27, 5}, 4 },
+  { {MsgType_names + 32, 4}, 2 },
+  { {MsgType_names + 36, 6}, 6 },
+  { {MsgType_names + 42, 4}, 1 },
 };
 
 static const int MsgType_entries_by_number[] = {
-  1, // 0 -> CONNECT
-  6, // 1 -> SEND
-  4, // 2 -> RECV
+  2, // 0 -> CONNECT
+  7, // 1 -> SEND
+  5, // 2 -> RECV
   0, // 3 -> CLOSE
-  3, // 4 -> ERROR
-  2, // 5 -> CREATE
-  5, // 6 -> RESULT
+  4, // 4 -> ERROR
+  3, // 5 -> CREATE
+  6, // 6 -> RESULT
+  1, // 7 -> CLOSE_ALL
 };
 
 const std::string& MsgType_Name(
@@ -150,12 +154,12 @@ const std::string& MsgType_Name(
       ::PROTOBUF_NAMESPACE_ID::internal::InitializeEnumStrings(
           MsgType_entries,
           MsgType_entries_by_number,
-          7, MsgType_strings);
+          8, MsgType_strings);
   (void) dummy;
   int idx = ::PROTOBUF_NAMESPACE_ID::internal::LookUpEnumName(
       MsgType_entries,
       MsgType_entries_by_number,
-      7, value);
+      8, value);
   return idx == -1 ? ::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString() :
                      MsgType_strings[idx].get();
 }
@@ -163,7 +167,7 @@ bool MsgType_Parse(
     ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, MsgType* value) {
   int int_value;
   bool success = ::PROTOBUF_NAMESPACE_ID::internal::LookUpEnumValue(
-      MsgType_entries, 7, name, &int_value);
+      MsgType_entries, 8, name, &int_value);
   if (success) {
     *value = static_cast<MsgType>(int_value);
   }

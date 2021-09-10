@@ -46,7 +46,7 @@ static void* recv_thread_func(void* params) {
 				count = 0;
 
 				char remoteIP[IP_CHARS_LEN] = {0};
-				inet_ntop(AF_INET, &oppoAddr, remoteIP, sizeof(remoteIP));
+				inet_ntop(AF_INET, &oppoAddr.sin_addr.s_addr, remoteIP, sizeof(remoteIP));
 				unsigned short remotePort = ntohs(oppoAddr.sin_port);
 
 				pCtx->recv_cb(remoteIP, remotePort, pCtx->recv_buffer, len, pCtx);
@@ -103,6 +103,17 @@ int UdpHelperInit(UdpHelperCtx* pCtx) {
 		LOG_E("errno=%d, %s", errno, strerror(errno));
 		return ERROR_FAILED;
 	}
+
+    int flag = 1, len = sizeof(int);
+    if (-1 == setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &flag, len)) {
+        LOG_E("errno=%d, %s", errno, strerror(errno));
+        return ERROR_FAILED;
+    }
+
+    if (-1 == setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &flag, len)) {
+        LOG_E("errno=%d, %s", errno, strerror(errno));
+        return ERROR_FAILED;
+    }
 
 	pCtx->socket_fd = fd;
 

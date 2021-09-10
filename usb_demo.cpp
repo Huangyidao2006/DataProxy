@@ -350,7 +350,7 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 
 			auto* pUdpHelperCtx = new UdpHelperCtx ;
 			pUdpHelperCtx->conn_id = connId;
-			pUdpHelperCtx->local_port = 0;
+			pUdpHelperCtx->local_port = port;
 			pUdpHelperCtx->recv_buffer = NULL;
 			pUdpHelperCtx->recv_cb = UdpRecvCb;
 			pUdpHelperCtx->error_cb = UdpErrorCb;
@@ -371,8 +371,8 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 		} break;
 
 		case MsgType::SEND: {
-			LOG_D("processUdpMsg, SEND, msgId=%d, ackId=%d, connId=%d, port=%d",
-				  msg->msgid(), msg->ackid(), connId, msg->port());
+			LOG_D("processUdpMsg, SEND, msgId=%d, ackId=%d, connId=%d, ip=%s, port=%d, dataLen=%d",
+				  msg->msgid(), msg->ackid(), connId, msg->ip().c_str(), msg->port(), msg->data().arg4().length());
 
 			auto pConn = findConnection(connId);
 			if (pConn == nullptr) {
@@ -446,7 +446,14 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 class ProxyMsgHandler : public MessageHandler<ProxyMsg> {
 protected:
 	void handleMessage(int what, std::shared_ptr<ProxyMsg>& msg) override {
-		if (MSG_PROCESS_PROXY_MESSAGE == what) {
+		if (-1 == msg->connid()) {
+			if (MsgType::CLOSE_ALL == msg->msgtype()) {
+                // 手机发送的关闭所有
+                LOG_I("close all connection");
+
+                closeAllConnection();
+			}
+		} else if (MSG_PROCESS_PROXY_MESSAGE == what) {
 			switch (msg->conntype()) {
 				case ConnType::TCP: {
 					processTcpMsg(msg);
