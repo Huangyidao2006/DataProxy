@@ -25,6 +25,7 @@ using namespace std;
 
 #define MSG_PROCESS_PROXY_MESSAGE 1
 #define MSG_CLOSE_ALL_CONN 2
+#define MSG_HEART_BEAT_TIMEOUT 3
 
 class ProxyMsgHandler;
 
@@ -443,32 +444,51 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 	}
 }
 
+int g_HeartBeatTimoutMs = 3000;
+
 class ProxyMsgHandler : public MessageHandler<ProxyMsg> {
 protected:
 	void handleMessage(int what, std::shared_ptr<ProxyMsg>& msg) override {
-		if (-1 == msg->connid()) {
-			if (MsgType::CLOSE_ALL == msg->msgtype()) {
-                // 手机发送的关闭所有
+		switch (what) {
+			case MSG_PROCESS_PROXY_MESSAGE: {
+                if (MsgType::CLOSE_ALL == msg->msgtype()) {
+                    // 手机发送的关闭所有
+                    LOG_I("close all connection by phone");
+
+                    closeAllConnection();
+                } else if (MsgType::USB_HEART_BEAT == msg->msgtype()) {
+                    // 去掉之前的超时，再设置新的超时
+                    removeMessages(MSG_HEART_BEAT_TIMEOUT);
+                    sendEmptyMessage(MSG_HEART_BEAT_TIMEOUT, g_HeartBeatTimoutMs);
+                } else {
+                    switch (msg->conntype()) {
+                        case ConnType::TCP: {
+                            processTcpMsg(msg);
+                        } break;
+
+                        case ConnType::UDP: {
+                            processUdpMsg(msg);
+                        } break;
+
+                        default:;
+                    }
+				}
+			} break;
+
+			case MSG_HEART_BEAT_TIMEOUT: {
+                LOG_I("heartbeat timeout, close all connection");
+
+                closeAllConnection();
+			} break;
+
+			case MSG_CLOSE_ALL_CONN: {
                 LOG_I("close all connection");
 
                 closeAllConnection();
-			}
-		} else if (MSG_PROCESS_PROXY_MESSAGE == what) {
-			switch (msg->conntype()) {
-				case ConnType::TCP: {
-					processTcpMsg(msg);
-				} break;
+			} break;
 
-				case ConnType::UDP: {
-					processUdpMsg(msg);
-				} break;
-
-				default:;
-			}
-		} else if (MSG_CLOSE_ALL_CONN == what) {
-			LOG_I("close all connection");
-
-			closeAllConnection();
+			default:
+				;
 		}
 	}
 };

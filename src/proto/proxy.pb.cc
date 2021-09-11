@@ -108,13 +108,14 @@ bool MsgType_IsValid(int value) {
     case 5:
     case 6:
     case 7:
+    case 8:
       return true;
     default:
       return false;
   }
 }
 
-static ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<std::string> MsgType_strings[8] = {};
+static ::PROTOBUF_NAMESPACE_ID::internal::ExplicitlyConstructed<std::string> MsgType_strings[9] = {};
 
 static const char MsgType_names[] =
   "CLOSE"
@@ -124,7 +125,8 @@ static const char MsgType_names[] =
   "ERROR"
   "RECV"
   "RESULT"
-  "SEND";
+  "SEND"
+  "USB_HEART_BEAT";
 
 static const ::PROTOBUF_NAMESPACE_ID::internal::EnumEntry MsgType_entries[] = {
   { {MsgType_names + 0, 5}, 3 },
@@ -135,6 +137,7 @@ static const ::PROTOBUF_NAMESPACE_ID::internal::EnumEntry MsgType_entries[] = {
   { {MsgType_names + 32, 4}, 2 },
   { {MsgType_names + 36, 6}, 6 },
   { {MsgType_names + 42, 4}, 1 },
+  { {MsgType_names + 46, 14}, 8 },
 };
 
 static const int MsgType_entries_by_number[] = {
@@ -146,6 +149,7 @@ static const int MsgType_entries_by_number[] = {
   3, // 5 -> CREATE
   6, // 6 -> RESULT
   1, // 7 -> CLOSE_ALL
+  8, // 8 -> USB_HEART_BEAT
 };
 
 const std::string& MsgType_Name(
@@ -154,12 +158,12 @@ const std::string& MsgType_Name(
       ::PROTOBUF_NAMESPACE_ID::internal::InitializeEnumStrings(
           MsgType_entries,
           MsgType_entries_by_number,
-          8, MsgType_strings);
+          9, MsgType_strings);
   (void) dummy;
   int idx = ::PROTOBUF_NAMESPACE_ID::internal::LookUpEnumName(
       MsgType_entries,
       MsgType_entries_by_number,
-      8, value);
+      9, value);
   return idx == -1 ? ::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString() :
                      MsgType_strings[idx].get();
 }
@@ -167,7 +171,7 @@ bool MsgType_Parse(
     ::PROTOBUF_NAMESPACE_ID::ConstStringParam name, MsgType* value) {
   int int_value;
   bool success = ::PROTOBUF_NAMESPACE_ID::internal::LookUpEnumValue(
-      MsgType_entries, 8, name, &int_value);
+      MsgType_entries, 9, name, &int_value);
   if (success) {
     *value = static_cast<MsgType>(int_value);
   }

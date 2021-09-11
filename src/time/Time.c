@@ -15,6 +15,13 @@ long long currentTimeMillis() {
 	return (long long) tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
 
+long long bootTimeMills() {
+	struct timespec ts;
+	clock_gettime(CLOCK_BOOTTIME, &ts);
+
+	return ts.tv_sec * 1000 + ts.tv_nsec / 1000000L;
+}
+
 int getCurrentTime(const char* fmt, char* buffer, int len) {
 	time_t now = time(NULL);
 	struct tm* t = localtime(&now);

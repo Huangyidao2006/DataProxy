@@ -11,6 +11,8 @@ extern "C" {
 
 long long currentTimeMillis();
 
+long long bootTimeMills();
+
 /**
  * 获取当前时间。
  *

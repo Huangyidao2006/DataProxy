@@ -5,6 +5,8 @@
 #ifndef DATAPROXY_MESSAGEHANDLER_H
 #define DATAPROXY_MESSAGEHANDLER_H
 
+#include "time/Time.h"
+
 #include <queue>
 #include <memory>
 #include <mutex>
@@ -15,14 +17,22 @@
 template<typename T>
 class MessageHandler : public std::enable_shared_from_this<MessageHandler<T>> {
 public:
-	class MessageEntity {
+	class Message {
 	public:
 		int what;
-		std::shared_ptr<T> msg;
+		std::shared_ptr<T> data;
+
+	private:
+		long long time;
+        std::shared_ptr<Message> next;
+
+		friend class MessageHandler<T>;
 	};
 
 protected:
-	std::queue<std::shared_ptr<MessageEntity>> mQueue;
+//	std::queue<std::shared_ptr<Message>> mQueue;
+
+	std::shared_ptr<Message> mMessageList = nullptr;
 
 	std::mutex mMutex;
 
@@ -41,12 +51,16 @@ public:
 
 	void stop();
 
-	void sendMessage(int what, std::shared_ptr<T>& msg);
+	void sendMessage(int what, std::shared_ptr<T>& data, int delayMillis = 0);
 
-	void clearMessage();
+    void sendEmptyMessage(int what, int delayMillis = 0);
+
+    void removeMessages(int what);
+
+	void clearMessages();
 
 protected:
-	virtual void handleMessage(int what, std::shared_ptr<T>& msg);
+	virtual void handleMessage(int what, std::shared_ptr<T>& data);
 
 private:
 	void thread_func();
@@ -56,12 +70,13 @@ private:
 
 template<typename T>
 MessageHandler<T>::MessageHandler() {
-
+    mMessageList = std::make_shared<Message>();
+	mMessageList->next = nullptr;
 }
 
 template<typename T>
 MessageHandler<T>::~MessageHandler() {
-	if (m_pThread->joinable()) {
+	if (m_pThread != nullptr && m_pThread->joinable()) {
 		m_pThread->detach();
 	}
 }
@@ -106,22 +121,40 @@ void MessageHandler<T>::thread_func() {
 	}
 
 	while (!mIsStop) {
-		std::shared_ptr<MessageEntity> entity = nullptr;
+		std::shared_ptr<Message> msg = nullptr;
 
 		{
 			std::unique_lock<std::mutex> lock(mMutex);
 
-			if (mQueue.empty()) {
-				auto duration = std::chrono::milliseconds(500);
-				mCond.wait_for(lock, duration);
+//			if (mQueue.empty()) {
+//				auto duration = std::chrono::milliseconds(500);
+//				mCond.wait_for(lock, duration);
+//			} else {
+//				msg = mQueue.front();
+//				mQueue.pop();
+//			}
+
+			auto now = bootTimeMills();
+
+			auto cur = mMessageList->next;
+			if (cur != nullptr) {
+                if (cur->time <= now) {
+					msg = cur;
+					mMessageList->next = cur->next;
+				} else {
+                    auto waitTimeMills = cur->time - now;
+					auto duration = std::chrono::milliseconds(waitTimeMills);
+
+                    mCond.wait_for(lock, duration);
+				}
 			} else {
-				entity = mQueue.front();
-				mQueue.pop();
+				auto duration = std::chrono::milliseconds(1000);
+				mCond.wait_for(lock, duration);
 			}
 		}
 
-		if (entity != nullptr) {
-			handleMessage(entity->what, entity->msg);
+		if (msg != nullptr) {
+			handleMessage(msg->what, msg->data);
 		}
 	}
 
@@ -136,30 +169,92 @@ void MessageHandler<T>::thread_func() {
 	}
 }
 
+//template<typename T>
+//void MessageHandler<T>::sendMessage(int what, std::shared_ptr<T>& data, int delayMillis) {
+//	std::unique_lock<std::mutex> lock(mMutex);
+//
+//	auto msg = std::make_shared<Message>();
+//	msg->what = what;
+//	msg->data = data;
+//
+//	mQueue.push(msg);
+//
+//	mCond.notify_all();
+//}
+
 template<typename T>
-void MessageHandler<T>::sendMessage(int what, std::shared_ptr<T>& msg) {
-	std::unique_lock<std::mutex> lock(mMutex);
+void MessageHandler<T>::sendMessage(int what, std::shared_ptr<T>& data, int delayMillis) {
+    std::unique_lock<std::mutex> lock(mMutex);
 
-	auto entity = std::make_shared<MessageEntity>();
-	entity->what = what;
-	entity->msg = msg;
+    auto msg = std::make_shared<Message>();
+    msg->what = what;
+    msg->data = data;
+	msg->time = bootTimeMills() + delayMillis;
+	msg->next = nullptr;
 
-	mQueue.push(entity);
+	if (mMessageList->next == nullptr) {
+        mMessageList->next = msg;
+	} else {
+		// 按时间顺序插入到list中
+		auto cur = mMessageList;
 
-	mCond.notify_all();
+        // 找到插入位置插入
+        auto curNext = cur->next;
+        while (curNext != nullptr && msg->time >= curNext->time) {
+            cur = curNext;
+            curNext = curNext->next;
+        }
+
+        cur->next = msg;
+        msg->next = curNext;
+	}
+
+    mCond.notify_all();
 }
 
 template<typename T>
-void MessageHandler<T>::clearMessage() {
-	std::unique_lock<std::mutex> lock(mMutex);
+void MessageHandler<T>::sendEmptyMessage(int what, int delayMillis) {
+	std::shared_ptr<T> data;
+	sendMessage(what, data, delayMillis);
+}
 
-	while (!mQueue.empty()) {
-		mQueue.pop();
+//template<typename T>
+//void MessageHandler<T>::clearMessage() {
+//	std::unique_lock<std::mutex> lock(mMutex);
+//
+//	while (!mQueue.empty()) {
+//		mQueue.pop();
+//	}
+//}
+
+template<typename T>
+void MessageHandler<T>::clearMessages() {
+    std::unique_lock<std::mutex> lock(mMutex);
+
+    mMessageList->next = nullptr;
+}
+
+template<typename T>
+void MessageHandler<T>::removeMessages(int what) {
+    std::unique_lock<std::mutex> lock(mMutex);
+
+	auto cur = mMessageList;
+	auto curNext = cur->next;
+
+	while (curNext != nullptr) {
+		if (curNext->what == what) {
+			cur->next = curNext->next;
+		} else {
+			cur = curNext;
+		}
+
+        curNext = cur->next;
 	}
 }
 
+
 template<typename T>
-void MessageHandler<T>::handleMessage(int what, std::shared_ptr<T>& msg) {
+void MessageHandler<T>::handleMessage(int what, std::shared_ptr<T>& data) {
 
 }
 
