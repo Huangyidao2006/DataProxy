@@ -5,13 +5,13 @@
 #ifndef DATAPROXY_USBMANAGER_H
 #define DATAPROXY_USBMANAGER_H
 
-#include <libusb-1.0/libusb.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
+#include "libusb/libusb.h"
 #include "common/Common.h"
 #include "common/Error.h"
 #include "log/Log.h"
