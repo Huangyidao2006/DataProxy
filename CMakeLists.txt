@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 11)
 include_directories(include
         3rdparty/protobuf-3.14.x/src)
 
-FILE(GLOB_RECURSE SRC_FILES "src/*/*.c" "src/*/*.cpp" "src/*/*.cc")
-LIST(FILTER SRC_FILES EXCLUDE REGEX "proxy.pb.cc")
+file(GLOB_RECURSE SRC_FILES "src/*/*.c" "src/*/*.cpp" "src/*/*.cc")
+list(FILTER SRC_FILES EXCLUDE REGEX "proxy.pb.cc")
 
 aux_source_directory(src/proto PROTO_SRC_FILES)
 
@@ -17,8 +17,17 @@ add_custom_command(OUTPUT abc
         COMMAND bash ${CMAKE_SOURCE_DIR}/3rdparty/libusb/autogen.sh
         COMMAND make -j8)
 
+file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/libimobiledevice)
+add_custom_command(OUTPUT def
+        WORKING_DIRECTORY libimobiledevice
+        COMMAND bash ${CMAKE_SOURCE_DIR}/3rdparty/libimobiledevice/autogen.sh
+        COMMAND make -j8)
+
 add_custom_target(build_libusb
         DEPENDS abc)
+
+add_custom_target(build_libimobiledevice
+        DEPENDS def)
 
 add_library(prebuilt-usb-1.0 STATIC IMPORTED)
 set_target_properties(prebuilt-usb-1.0 PROPERTIES
@@ -28,8 +37,18 @@ target_include_directories(prebuilt-usb-1.0 INTERFACE
 target_link_libraries(prebuilt-usb-1.0 INTERFACE
         udev)
 
+add_library(prebuilt-imobiledevice SHARED IMPORTED)
+set_target_properties(prebuilt-imobiledevice PROPERTIES
+        IMPORTED_LOCATION ${CMAKE_BINARY_DIR}/libimobiledevice/src/.libs/libimobiledevice-1.0.so)
+target_include_directories(prebuilt-imobiledevice INTERFACE
+        ${CMAKE_SOURCE_DIR}/3rdparty/libimobiledevice)
+
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/libusb/.libs/libusb-1.0.a")
     add_dependencies(prebuilt-usb-1.0 build_libusb)
+endif()
+
+if(NOT EXISTS "${CMAKE_BINARY_DIR}/libimobiledevice/src/.libs/libimobiledevice-1.0.so")
+    add_dependencies(prebuilt-imobiledevice build_libimobiledevice)
 endif()
 
 add_executable(udp_demo udp_demo.c ${SRC_FILES})
@@ -51,7 +70,8 @@ add_executable(usb_demo usb_demo.cpp ${SRC_FILES} ${PROTO_SRC_FILES})
 target_link_libraries(usb_demo
         libprotobuf-lite
         pthread
-        prebuilt-usb-1.0)
+        prebuilt-usb-1.0
+        prebuilt-imobiledevice)
 
 add_executable(queue_demo queue_demo.c ${SRC_FILES})
 target_link_libraries(queue_demo

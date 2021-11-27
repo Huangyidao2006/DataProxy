@@ -4,3 +4,15 @@
 [submodule "3rdparty/libusb"]
 	path = 3rdparty/libusb
 	url = https://github.com/libusb/libusb
+[submodule "3rdparty/libimobiledevice"]
+	path = 3rdparty/libimobiledevice
+	url = https://github.com/libimobiledevice/libimobiledevice
+[submodule "3rdparty/libimobiledevice-glue"]
+	path = 3rdparty/libimobiledevice-glue
+	url = https://github.com/libimobiledevice/libimobiledevice-glue
+[submodule "3rdparty/usbmuxd"]
+	path = 3rdparty/usbmuxd
+	url = https://github.com/libimobiledevice/usbmuxd
+[submodule "3rdparty/libusbmuxd"]
+	path = 3rdparty/libusbmuxd
+	url = https://github.com/libimobiledevice/libusbmuxd
