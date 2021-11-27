@@ -349,7 +349,7 @@ void processUdpMsg(std::shared_ptr<ProxyMsg>& msg) {
 			LOG_D("processUdpMsg, CREATE, msgId=%d, ackId=%d, connId=%d, port=%d",
 				  msg->msgid(), msg->ackid(), connId, msg->port());
 
-			auto* pUdpHelperCtx = new UdpHelperCtx ;
+			auto* pUdpHelperCtx = new UdpHelperCtx;
 			pUdpHelperCtx->conn_id = connId;
 			pUdpHelperCtx->local_port = port;
 			pUdpHelperCtx->recv_buffer = NULL;

@@ -24,7 +24,7 @@ void* send_thread_func(void* params) {
 
 	FILE* fp = fopen("../assets/yueyawan.mp3", "rb");
 	if (fp != NULL) {
-		char buffer[SEND_FRAME_LEN];
+		char* buffer = malloc(SEND_FRAME_LEN);
 		while (true) {
 			size_t len = fread(buffer, 1, sizeof(buffer), fp);
 			if (len > 0) {
@@ -48,6 +48,7 @@ void* send_thread_func(void* params) {
 			sleepMs(10);
 		}
 
+		free(buffer);
 		fclose(fp);
 	} else {
 		LOG_E("open %s failed", "yueyawan.mp3");
