@@ -6,6 +6,7 @@
 #include "log/Log.h"
 
 #include "usb/UsbManager.h"
+#include "usbmuxd/iOSUsbMuxManager.h"
 #include "net/TcpClient.h"
 #include "net/UdpHelper.h"
 #include "src/proto/proxy.pb.h"
@@ -20,6 +21,8 @@
 
 using namespace std;
 
+#define IOS_REMOTE_PORT 4000
+
 #define FRAME_BEGIN "#frame-begin#"
 #define FRAME_HEADER_LEN (strlen(FRAME_BEGIN) + sizeof(uint32_t))
 
@@ -30,8 +33,10 @@ using namespace std;
 class ProxyMsgHandler;
 
 UsbManager g_UsbManager;
-shared_ptr<ProxyMsgHandler> g_pProxyMsgHandler;
+std::shared_ptr<iOSUsbMuxManager> g_iOSUsbMuxManager;
+bool g_isAndroid = false;
 
+shared_ptr<ProxyMsgHandler> g_pProxyMsgHandler;
 string g_UsbFrameBuffer;
 
 string readUsbFrame() {
@@ -60,6 +65,7 @@ void sendEmptyMessage(int msgType);
 void UsbManagerRecvCb(const char* data, int len) {
 	LOG_D("UsbManagerRecvCb, dataLen=%d", len);
 
+    g_isAndroid = true;
 	g_UsbFrameBuffer.append(data, len);
 
 	while (true) {
@@ -80,18 +86,54 @@ void UsbManagerErrorCb(int error, const char* des) {
 }
 
 int sendToUsb(const char* data, int dataLen) {
-	int offset = 0;
-	while (offset != dataLen) {
-		int sent = UsbManagerSend(&g_UsbManager, (char*) &data[offset], dataLen - offset);
-		if (sent > 0) {
-			offset += sent;
-		} else {
-			return sent;
+	if (g_isAndroid) {
+        int offset = 0;
+        while (offset != dataLen) {
+            int sent = UsbManagerSend(&g_UsbManager, (char*) &data[offset], dataLen - offset);
+            if (sent > 0) {
+                offset += sent;
+            } else {
+                return sent;
+            }
+        }
+
+        return offset;
+	} else {
+		if (g_iOSUsbMuxManager->isConnected()) {
+			int ret = g_iOSUsbMuxManager->send(data, dataLen);
+
+			return SUCCESS == ret ? dataLen : 0;
 		}
 	}
 
-	return offset;
+	return 0;
 }
+
+class myiOSUsbMuxListener : public iOSUsbMuxListener {
+public:
+	void onRecv(const char *data, int len) override {
+        LOG_D("iOSUsbMuxListener onRecv, dataLen=%d", len);
+
+        g_isAndroid = false;
+        g_UsbFrameBuffer.append(data, len);
+
+        while (true) {
+            string frameData = readUsbFrame();
+            if (frameData.empty()) {
+                break;
+            }
+
+            processUsbFrame(frameData);
+        }
+	}
+
+    void onError(int error, const char *des) override {
+        LOG_E("usb error=%d, %s", error, des);
+
+        // 断开所有网络连接
+        sendEmptyMessage(MSG_CLOSE_ALL_CONN);
+	}
+};
 
 class Connection {
 public:
@@ -537,13 +579,26 @@ void processUsbFrame(const string& frameData) {
 }
 
 int main(int argc, char* argv[]) {
+	LOG_I("init Android usb");
+
 	g_UsbManager.recv_cb = UsbManagerRecvCb;
 	g_UsbManager.error_cb = UsbManagerErrorCb;
 
 	int ret = UsbManagerInit(&g_UsbManager);
 	if (SUCCESS != ret) {
-		LOG_E("init usb error");
+		LOG_E("init Android usb error");
 		return 1;
+	}
+
+    LOG_I("init iOS usb");
+
+	auto iOSListener = std::make_shared<myiOSUsbMuxListener>();
+	g_iOSUsbMuxManager = std::make_shared<iOSUsbMuxManager>(IOS_REMOTE_PORT, iOSListener);
+
+	ret = g_iOSUsbMuxManager->init();
+	if (SUCCESS != ret) {
+        LOG_E("init iOS usb error");
+        return 1;
 	}
 
 	// init message handler

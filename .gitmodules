@@ -16,3 +16,9 @@
 [submodule "3rdparty/libusbmuxd"]
 	path = 3rdparty/libusbmuxd
 	url = https://github.com/libimobiledevice/libusbmuxd
+[submodule "3rdparty/plist"]
+	path = 3rdparty/plist
+	url = https://github.com/patsplat/plist
+[submodule "3rdparty/libplist"]
+	path = 3rdparty/libplist
+	url = https://github.com/libimobiledevice/libplist
