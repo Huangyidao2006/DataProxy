@@ -499,6 +499,10 @@ protected:
 
                     closeAllConnection();
                 } else if (MsgType::USB_HEART_BEAT == msg->msgtype()) {
+					::sendMessage(0, msg->msgid(), msg->connid(), ConnType::TCP,
+								MsgType::RESULT, "", 0,
+								0, 0, "heart beat ack", "");
+
                     // 去掉之前的超时，再设置新的超时
                     removeMessages(MSG_HEART_BEAT_TIMEOUT);
                     sendEmptyMessage(MSG_HEART_BEAT_TIMEOUT, g_HeartBeatTimoutMs);

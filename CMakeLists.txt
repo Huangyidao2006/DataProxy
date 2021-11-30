@@ -21,7 +21,7 @@ add_custom_command(OUTPUT aaa
         COMMAND make -j8)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/libimobiledevice)
-add_custom_command(OUTPUT def
+add_custom_command(OUTPUT bbb
         WORKING_DIRECTORY libimobiledevice
         COMMAND bash ${CMAKE_SOURCE_DIR}/3rdparty/libimobiledevice/autogen.sh
         COMMAND make -j8)
@@ -132,8 +132,8 @@ target_link_libraries(usb_demo
         pthread
         prebuilt-usb-1.0
         prebuilt-libusbmuxd
-        prebuilt-imobiledevice
         prebuilt-imobiledevice-glue
+        prebuilt-imobiledevice
         prebuilt-libplist)
 
 add_executable(queue_demo queue_demo.c ${SRC_FILES})
