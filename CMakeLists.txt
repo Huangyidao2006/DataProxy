@@ -24,6 +24,7 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/libimobiledevice)
 add_custom_command(OUTPUT bbb
         WORKING_DIRECTORY libimobiledevice
         COMMAND bash ${CMAKE_SOURCE_DIR}/3rdparty/libimobiledevice/autogen.sh
+        COMMAND bash ${CMAKE_SOURCE_DIR}/3rdparty/libimobiledevice/configure --without-cython
         COMMAND make -j8)
 
 file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/libimobiledevice-glue)
@@ -42,6 +43,7 @@ file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/libplist)
 add_custom_command(OUTPUT ddd
         WORKING_DIRECTORY libplist
         COMMAND bash ${CMAKE_SOURCE_DIR}/3rdparty/libplist/autogen.sh
+        COMMAND bash ${CMAKE_SOURCE_DIR}/3rdparty/libplist/configure --without-cython
         COMMAND make -j8)
 
 add_custom_target(build_libusb
@@ -111,17 +113,27 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/libplist/src/.libs/libplist-2.0.a")
     add_dependencies(prebuilt-libplist build_libplist)
 endif()
 
-add_executable(udp_demo udp_demo.c ${SRC_FILES})
+set(UDP_SRC_FILES "${SRC_FILES}")
+list(FILTER UDP_SRC_FILES EXCLUDE REGEX "usb/")
+list(FILTER UDP_SRC_FILES EXCLUDE REGEX "usbmuxd/")
+
+add_executable(udp_demo udp_demo.c ${UDP_SRC_FILES})
 target_link_libraries(udp_demo
         pthread
         prebuilt-usb-1.0)
 
-add_executable(tcp_server_demo tcp_server_demo.c ${SRC_FILES})
+set(TCP_SERVER_SRC_FILES "${SRC_FILES}")
+list(FILTER TCP_SERVER_SRC_FILES EXCLUDE REGEX "usb/")
+list(FILTER TCP_SERVER_SRC_FILES EXCLUDE REGEX "usbmuxd/")
+add_executable(tcp_server_demo tcp_server_demo.c ${TCP_SERVER_SRC_FILES})
 target_link_libraries(tcp_server_demo
         pthread
         prebuilt-usb-1.0)
 
-add_executable(tcp_client_demo tcp_client_demo.c ${SRC_FILES})
+set(TCP_CLIENT_SRC_FILES "${SRC_FILES}")
+list(FILTER TCP_CLIENT_SRC_FILES EXCLUDE REGEX "usb/")
+list(FILTER TCP_CLIENT_SRC_FILES EXCLUDE REGEX "usbmuxd/")
+add_executable(tcp_client_demo tcp_client_demo.c ${TCP_CLIENT_SRC_FILES})
 target_link_libraries(tcp_client_demo
         pthread
         prebuilt-usb-1.0)
@@ -136,12 +148,18 @@ target_link_libraries(usb_demo
         prebuilt-imobiledevice
         prebuilt-libplist)
 
-add_executable(queue_demo queue_demo.c ${SRC_FILES})
+set(QUEUE_DEMO_SRC_FILES "${SRC_FILES}")
+list(FILTER QUEUE_DEMO_SRC_FILES EXCLUDE REGEX "usb/")
+list(FILTER QUEUE_DEMO_SRC_FILES EXCLUDE REGEX "usbmuxd/")
+add_executable(queue_demo queue_demo.c ${QUEUE_DEMO_SRC_FILES})
 target_link_libraries(queue_demo
         pthread
         prebuilt-usb-1.0)
 
-add_executable(handler_demo handler_demo.cpp ${SRC_FILES})
+set(HANDLER_DEMO_SRC_FILES "${SRC_FILES}")
+list(FILTER HANDLER_DEMO_SRC_FILES EXCLUDE REGEX "usb/")
+list(FILTER HANDLER_DEMO_SRC_FILES EXCLUDE REGEX "usbmuxd/")
+add_executable(handler_demo handler_demo.cpp ${HANDLER_DEMO_SRC_FILES})
 target_link_libraries(handler_demo
         pthread
         prebuilt-usb-1.0)
